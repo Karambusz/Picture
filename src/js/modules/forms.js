@@ -1,9 +1,17 @@
 // import checkNumInputs from "./checkNumInputs";
 import {postData} from "../services/requests";
-const forms = () => {
+const forms = (state) => {
     const form = document.querySelectorAll('form'),
         inputs = document.querySelectorAll('input'),
         upload = document.querySelectorAll('[name="upload"]');
+
+
+        inputs.forEach(item => {
+            if(item.getAttribute('name') === 'upload') {
+                item.setAttribute('required', '');
+                console.log(item);
+            }
+        });
 
 
     const message = {
@@ -55,6 +63,13 @@ const forms = () => {
             statusMessage.appendChild(textMessage);
 
             const formData = new FormData(item);
+
+            if (item.getAttribute("data-calc") === "") {
+                for(let key in state) {
+                    formData.append(key, state[key]);
+                }
+            }
+
             let api;
             item.closest('.popup-design') || item.classList.contains("calc_form") ? api = path.designer : api = path.question;
             console.log(api);
@@ -70,10 +85,21 @@ const forms = () => {
                     textMessage.innerHTML = message.failure;
                 })
                 .finally(() => {
+                    console.log(item);
                     item.reset();
                     upload.forEach(item => {
                         item.previousElementSibling.textContent = "Файл не выбран"; 
                     });
+
+                    if(state) {                       
+                        for(let key in state) {
+                            delete state[key];
+                        }
+                        const resultBlock = document.querySelector(".calc-price");
+                        resultBlock.textContent = "Для расчета нужно выбрать размер картины и материал картины";
+                        console.log(state); 
+                    }
+
                     setTimeout(() => {
                         statusMessage.remove();
                         item.style.display = 'block';

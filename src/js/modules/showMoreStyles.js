@@ -4,10 +4,10 @@ const showMoreStyles = (trigger, wrapper) => {
     const btn = document.querySelector(trigger);
 
     btn.addEventListener('click', function() {
-        getResource('http://localhost:3000/styles')
-            .then(res => createCards(res))
+        getResource('assets/db.json')
+            .then(res => createCards(res.styles))
             .catch(error => alert(error));
-            
+
         this.remove();
     });
 
