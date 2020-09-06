@@ -41,10 +41,6 @@ const mask = (selector)=> {
         } else {
             setCursorPosition(this.value.length, this);
         }
-        console.log(`def = ${def}`);
-        console.log(`val = ${val}`);
-        console.log(`value = ${this.value}`);
-        
     }
 
     let inputs = document.querySelectorAll(selector);
