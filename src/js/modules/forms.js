@@ -9,7 +9,6 @@ const forms = (state) => {
         inputs.forEach(item => {
             if(item.getAttribute('name') === 'upload') {
                 item.setAttribute('required', '');
-                console.log(item);
             }
         });
 

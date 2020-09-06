@@ -5,6 +5,7 @@ import mask from "./modules/mask";
 import checkTextInputs from './modules/checkTextInputs';
 import showMoreStyles from "./modules/showMoreStyles";
 import calc from "./modules/calc";
+import filter from "./modules/filter";
 
 window.addEventListener("DOMContentLoaded", ()=> {
     'use strict';
@@ -20,6 +21,7 @@ window.addEventListener("DOMContentLoaded", ()=> {
     checkTextInputs('[name="name"]');
     checkTextInputs('[name="message"]');
     showMoreStyles('.button-styles', '#styles .row');
+    filter();
 
 
 
@@ -27,7 +29,7 @@ window.addEventListener("DOMContentLoaded", ()=> {
 
 
 
-    //1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14
+    //1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14
 
 
 
