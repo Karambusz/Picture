@@ -25,7 +25,7 @@ window.addEventListener("DOMContentLoaded", ()=> {
     showMoreStyles('.button-styles', '#styles .row');
     filter();
     pictureSize(".sizes-block");
-    accordion(".accordion-heading", ".accordion-block");
+    accordion(".accordion-heading");
 
 
 
