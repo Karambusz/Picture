@@ -6,6 +6,7 @@ import checkTextInputs from './modules/checkTextInputs';
 import showMoreStyles from "./modules/showMoreStyles";
 import calc from "./modules/calc";
 import filter from "./modules/filter";
+import pictureSize from "./modules/pictureSize";
 
 window.addEventListener("DOMContentLoaded", ()=> {
     'use strict';
@@ -22,6 +23,7 @@ window.addEventListener("DOMContentLoaded", ()=> {
     checkTextInputs('[name="message"]');
     showMoreStyles('.button-styles', '#styles .row');
     filter();
+    pictureSize(".sizes-block");
 
 
 
@@ -29,7 +31,7 @@ window.addEventListener("DOMContentLoaded", ()=> {
 
 
 
-    //1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14
+    //1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14
 
 
 
