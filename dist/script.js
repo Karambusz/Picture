@@ -296,6 +296,36 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/internals/array-method-has-species-support.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/core-js/internals/array-method-has-species-support.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+var V8_VERSION = __webpack_require__(/*! ../internals/v8-version */ "./node_modules/core-js/internals/v8-version.js");
+
+var SPECIES = wellKnownSymbol('species');
+
+module.exports = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return V8_VERSION >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/internals/array-species-create.js":
 /*!****************************************************************!*\
   !*** ./node_modules/core-js/internals/array-species-create.js ***!
@@ -513,6 +543,29 @@ module.exports = function (target, source) {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/internals/create-html.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/core-js/internals/create-html.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var requireObjectCoercible = __webpack_require__(/*! ../internals/require-object-coercible */ "./node_modules/core-js/internals/require-object-coercible.js");
+
+var quot = /"/g;
+
+// B.2.3.2.1 CreateHTML(string, tag, attribute, value)
+// https://tc39.github.io/ecma262/#sec-createhtml
+module.exports = function (string, tag, attribute, value) {
+  var S = String(requireObjectCoercible(string));
+  var p1 = '<' + tag;
+  if (attribute !== '') p1 += ' ' + attribute + '="' + String(value).replace(quot, '&quot;') + '"';
+  return p1 + '>' + S + '</' + tag + '>';
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/internals/create-non-enumerable-property.js":
 /*!**************************************************************************!*\
   !*** ./node_modules/core-js/internals/create-non-enumerable-property.js ***!
@@ -548,6 +601,28 @@ module.exports = function (bitmap, value) {
     writable: !(bitmap & 4),
     value: value
   };
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/internals/create-property.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/core-js/internals/create-property.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var toPrimitive = __webpack_require__(/*! ../internals/to-primitive */ "./node_modules/core-js/internals/to-primitive.js");
+var definePropertyModule = __webpack_require__(/*! ../internals/object-define-property */ "./node_modules/core-js/internals/object-define-property.js");
+var createPropertyDescriptor = __webpack_require__(/*! ../internals/create-property-descriptor */ "./node_modules/core-js/internals/create-property-descriptor.js");
+
+module.exports = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) definePropertyModule.f(object, propertyKey, createPropertyDescriptor(0, value));
+  else object[propertyKey] = value;
 };
 
 
@@ -848,6 +923,27 @@ module.exports = function (KEY, length, exec, sham) {
     );
     if (sham) createNonEnumerableProperty(RegExp.prototype[SYMBOL], 'sham', true);
   }
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/internals/forced-string-html-method.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/core-js/internals/forced-string-html-method.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+
+// check the existence of a method, lowercase
+// of a tag and escaping quotes in arguments
+module.exports = function (METHOD_NAME) {
+  return fails(function () {
+    var test = ''[METHOD_NAME]('"');
+    return test !== test.toLowerCase() || test.split('"').length > 3;
+  });
 };
 
 
@@ -2516,6 +2612,135 @@ module.exports = function (name) {
 
 /***/ }),
 
+/***/ "./node_modules/core-js/modules/es.array.concat.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.array.concat.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var fails = __webpack_require__(/*! ../internals/fails */ "./node_modules/core-js/internals/fails.js");
+var isArray = __webpack_require__(/*! ../internals/is-array */ "./node_modules/core-js/internals/is-array.js");
+var isObject = __webpack_require__(/*! ../internals/is-object */ "./node_modules/core-js/internals/is-object.js");
+var toObject = __webpack_require__(/*! ../internals/to-object */ "./node_modules/core-js/internals/to-object.js");
+var toLength = __webpack_require__(/*! ../internals/to-length */ "./node_modules/core-js/internals/to-length.js");
+var createProperty = __webpack_require__(/*! ../internals/create-property */ "./node_modules/core-js/internals/create-property.js");
+var arraySpeciesCreate = __webpack_require__(/*! ../internals/array-species-create */ "./node_modules/core-js/internals/array-species-create.js");
+var arrayMethodHasSpeciesSupport = __webpack_require__(/*! ../internals/array-method-has-species-support */ "./node_modules/core-js/internals/array-method-has-species-support.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+var V8_VERSION = __webpack_require__(/*! ../internals/v8-version */ "./node_modules/core-js/internals/v8-version.js");
+
+var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+// We can't use this feature detection in V8 since it causes
+// deoptimization and serious performance degradation
+// https://github.com/zloirock/core-js/issues/679
+var IS_CONCAT_SPREADABLE_SUPPORT = V8_VERSION >= 51 || !fails(function () {
+  var array = [];
+  array[IS_CONCAT_SPREADABLE] = false;
+  return array.concat()[0] !== array;
+});
+
+var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+var isConcatSpreadable = function (O) {
+  if (!isObject(O)) return false;
+  var spreadable = O[IS_CONCAT_SPREADABLE];
+  return spreadable !== undefined ? !!spreadable : isArray(O);
+};
+
+var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+// `Array.prototype.concat` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.concat
+// with adding support of @@isConcatSpreadable and @@species
+$({ target: 'Array', proto: true, forced: FORCED }, {
+  concat: function concat(arg) { // eslint-disable-line no-unused-vars
+    var O = toObject(this);
+    var A = arraySpeciesCreate(O, 0);
+    var n = 0;
+    var i, k, length, len, E;
+    for (i = -1, length = arguments.length; i < length; i++) {
+      E = i === -1 ? O : arguments[i];
+      if (isConcatSpreadable(E)) {
+        len = toLength(E.length);
+        if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+      } else {
+        if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        createProperty(A, n++, E);
+      }
+    }
+    A.length = n;
+    return A;
+  }
+});
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/modules/es.array.slice.js":
+/*!********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.array.slice.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var isObject = __webpack_require__(/*! ../internals/is-object */ "./node_modules/core-js/internals/is-object.js");
+var isArray = __webpack_require__(/*! ../internals/is-array */ "./node_modules/core-js/internals/is-array.js");
+var toAbsoluteIndex = __webpack_require__(/*! ../internals/to-absolute-index */ "./node_modules/core-js/internals/to-absolute-index.js");
+var toLength = __webpack_require__(/*! ../internals/to-length */ "./node_modules/core-js/internals/to-length.js");
+var toIndexedObject = __webpack_require__(/*! ../internals/to-indexed-object */ "./node_modules/core-js/internals/to-indexed-object.js");
+var createProperty = __webpack_require__(/*! ../internals/create-property */ "./node_modules/core-js/internals/create-property.js");
+var arrayMethodHasSpeciesSupport = __webpack_require__(/*! ../internals/array-method-has-species-support */ "./node_modules/core-js/internals/array-method-has-species-support.js");
+var wellKnownSymbol = __webpack_require__(/*! ../internals/well-known-symbol */ "./node_modules/core-js/internals/well-known-symbol.js");
+
+var SPECIES = wellKnownSymbol('species');
+var nativeSlice = [].slice;
+var max = Math.max;
+
+// `Array.prototype.slice` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.slice
+// fallback for not array-like ES3 strings and DOM objects
+$({ target: 'Array', proto: true, forced: !arrayMethodHasSpeciesSupport('slice') }, {
+  slice: function slice(start, end) {
+    var O = toIndexedObject(this);
+    var length = toLength(O.length);
+    var k = toAbsoluteIndex(start, length);
+    var fin = toAbsoluteIndex(end === undefined ? length : end, length);
+    // inline `ArraySpeciesCreate` for usage native `Array#slice` where it's possible
+    var Constructor, result, n;
+    if (isArray(O)) {
+      Constructor = O.constructor;
+      // cross-realm fallback
+      if (typeof Constructor == 'function' && (Constructor === Array || isArray(Constructor.prototype))) {
+        Constructor = undefined;
+      } else if (isObject(Constructor)) {
+        Constructor = Constructor[SPECIES];
+        if (Constructor === null) Constructor = undefined;
+      }
+      if (Constructor === Array || Constructor === undefined) {
+        return nativeSlice.call(O, k, fin);
+      }
+    }
+    result = new (Constructor === undefined ? Array : Constructor)(max(fin - k, 0));
+    for (n = 0; k < fin; k++, n++) if (k in O) createProperty(result, n, O[k]);
+    result.length = n;
+    return result;
+  }
+});
+
+
+/***/ }),
+
 /***/ "./node_modules/core-js/modules/es.function.name.js":
 /*!**********************************************************!*\
   !*** ./node_modules/core-js/modules/es.function.name.js ***!
@@ -3002,6 +3227,30 @@ $({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
     });
     if (result.error) reject(result.value);
     return capability.promise;
+  }
+});
+
+
+/***/ }),
+
+/***/ "./node_modules/core-js/modules/es.string.link.js":
+/*!********************************************************!*\
+  !*** ./node_modules/core-js/modules/es.string.link.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(/*! ../internals/export */ "./node_modules/core-js/internals/export.js");
+var createHTML = __webpack_require__(/*! ../internals/create-html */ "./node_modules/core-js/internals/create-html.js");
+var forcedStringHTMLMethod = __webpack_require__(/*! ../internals/forced-string-html-method */ "./node_modules/core-js/internals/forced-string-html-method.js");
+
+// `String.prototype.link` method
+// https://tc39.github.io/ecma262/#sec-string.prototype.link
+$({ target: 'String', proto: true, forced: forcedStringHTMLMethod('link') }, {
+  link: function link(url) {
+    return createHTML(this, 'a', 'href', url);
   }
 });
 
@@ -4157,6 +4406,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_forms__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/forms */ "./src/js/modules/forms.js");
 /* harmony import */ var _modules_mask__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/mask */ "./src/js/modules/mask.js");
 /* harmony import */ var _modules_checkTextInputs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/checkTextInputs */ "./src/js/modules/checkTextInputs.js");
+/* harmony import */ var _modules_showMoreStyles__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./modules/showMoreStyles */ "./src/js/modules/showMoreStyles.js");
+/* harmony import */ var _modules_calc__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./modules/calc */ "./src/js/modules/calc.js");
+/* harmony import */ var _modules_filter__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./modules/filter */ "./src/js/modules/filter.js");
+/* harmony import */ var _modules_pictureSize__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./modules/pictureSize */ "./src/js/modules/pictureSize.js");
+/* harmony import */ var _modules_accordion__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./modules/accordion */ "./src/js/modules/accordion.js");
+/* harmony import */ var _modules_burger__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./modules/burger */ "./src/js/modules/burger.js");
+/* harmony import */ var _modules_scrolling__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./modules/scrolling */ "./src/js/modules/scrolling.js");
+/* harmony import */ var _modules_drop__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./modules/drop */ "./src/js/modules/drop.js");
+
+
+
+
+
+
+
+
 
 
 
@@ -4165,14 +4430,139 @@ __webpack_require__.r(__webpack_exports__);
 window.addEventListener("DOMContentLoaded", function () {
   'use strict';
 
+  var calcRes = {};
+  Object(_modules_calc__WEBPACK_IMPORTED_MODULE_6__["default"])("#size", "#material", "#options", ".promocode", ".calc-price", calcRes);
   Object(_modules_modals__WEBPACK_IMPORTED_MODULE_0__["default"])();
   Object(_modules_sliders__WEBPACK_IMPORTED_MODULE_1__["default"])(".feedback-slider-item", "horizontal", ".main-prev-btn", ".main-next-btn");
   Object(_modules_sliders__WEBPACK_IMPORTED_MODULE_1__["default"])(".main-slider-item", "vertical");
-  Object(_modules_forms__WEBPACK_IMPORTED_MODULE_2__["default"])();
+  Object(_modules_forms__WEBPACK_IMPORTED_MODULE_2__["default"])(calcRes);
   Object(_modules_mask__WEBPACK_IMPORTED_MODULE_3__["default"])('[name="phone"]');
   Object(_modules_checkTextInputs__WEBPACK_IMPORTED_MODULE_4__["default"])('[name="name"]');
-  Object(_modules_checkTextInputs__WEBPACK_IMPORTED_MODULE_4__["default"])('[name="message"]'); //1, 2, 3, 4, 5, 10, 12, 13, 14
+  Object(_modules_checkTextInputs__WEBPACK_IMPORTED_MODULE_4__["default"])('[name="message"]');
+  Object(_modules_showMoreStyles__WEBPACK_IMPORTED_MODULE_5__["default"])('.button-styles', '#styles .row');
+  Object(_modules_filter__WEBPACK_IMPORTED_MODULE_7__["default"])();
+  Object(_modules_pictureSize__WEBPACK_IMPORTED_MODULE_8__["default"])(".sizes-block");
+  Object(_modules_accordion__WEBPACK_IMPORTED_MODULE_9__["default"])(".accordion-heading");
+  Object(_modules_burger__WEBPACK_IMPORTED_MODULE_10__["default"])(".burger-menu", ".burger");
+  Object(_modules_scrolling__WEBPACK_IMPORTED_MODULE_11__["default"])(".pageup");
+  Object(_modules_drop__WEBPACK_IMPORTED_MODULE_12__["default"])();
 });
+
+/***/ }),
+
+/***/ "./src/js/modules/accordion.js":
+/*!*************************************!*\
+  !*** ./src/js/modules/accordion.js ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+
+
+var accordion = function accordion(triggerSelector) {
+  var btns = document.querySelectorAll(triggerSelector);
+  btns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (!this.classList.contains("active-style")) {
+        btns.forEach(function (item) {
+          item.classList.remove("active-style");
+          item.nextElementSibling.classList.remove("active-content");
+          item.nextElementSibling.style.maxHeight = '0px';
+        });
+        this.classList.toggle("active-style");
+        this.nextElementSibling.classList.toggle("active-content");
+        this.nextElementSibling.style.maxHeight = this.nextElementSibling.scrollHeight + 80 + "px";
+      } else {
+        this.classList.toggle("active-style");
+        this.nextElementSibling.classList.toggle("active-content");
+        this.nextElementSibling.style.maxHeight = '0px';
+      }
+    });
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (accordion);
+
+/***/ }),
+
+/***/ "./src/js/modules/burger.js":
+/*!**********************************!*\
+  !*** ./src/js/modules/burger.js ***!
+  \**********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+var burger = function burger(menuSelector, burgerSelector) {
+  var menuElem = document.querySelector(menuSelector),
+      burgerElem = document.querySelector(burgerSelector);
+  menuElem.style.display = 'none';
+  burgerElem.addEventListener('click', function () {
+    if (menuElem.style.display == "none" && window.screen.availWidth < 993) {
+      menuElem.style.display = "block";
+    } else {
+      menuElem.style.display = "none";
+    }
+  });
+  window.addEventListener('resize', function () {
+    if (window.screen.availWidth > 992) {
+      menuElem.style.display = "none";
+    }
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (burger);
+
+/***/ }),
+
+/***/ "./src/js/modules/calc.js":
+/*!********************************!*\
+  !*** ./src/js/modules/calc.js ***!
+  \********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+var calc = function calc(size, material, options, promocode, result, calcRes) {
+  var sizeBlock = document.querySelector(size),
+      materialBlock = document.querySelector(material),
+      optionsBlock = document.querySelector(options),
+      promocodeBlock = document.querySelector(promocode),
+      resultBlock = document.querySelector(result);
+  var sum = 0;
+
+  function calcFunc(event, elem, prop) {
+    elem.addEventListener(event, function () {
+      sum = Math.round(+sizeBlock.value * +materialBlock.value + +optionsBlock.value);
+
+      if (sizeBlock.value == '' || materialBlock.value == '') {
+        resultBlock.textContent = "Пожалуйста, выберите размер и материал картины";
+        calcRes.total = resultBlock.textContent;
+      } else if (promocodeBlock.value === 'IWANTPOPART') {
+        resultBlock.textContent = Math.round(sum * 0.7);
+        calcRes.total = resultBlock.textContent;
+      } else {
+        resultBlock.textContent = sum;
+        calcRes.total = resultBlock.textContent;
+      }
+
+      calcRes[prop] = elem.value;
+    });
+  }
+
+  calcFunc('change', sizeBlock, "size");
+  calcFunc('change', materialBlock, "material");
+  calcFunc('change', optionsBlock, "options");
+  calcFunc('input', promocodeBlock, "promocode");
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (calc);
 
 /***/ }),
 
@@ -4212,6 +4602,155 @@ var checkTextInputs = function checkTextInputs(selector) {
 
 /***/ }),
 
+/***/ "./src/js/modules/drop.js":
+/*!********************************!*\
+  !*** ./src/js/modules/drop.js ***!
+  \********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_es_function_name__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.function.name */ "./node_modules/core-js/modules/es.function.name.js");
+/* harmony import */ var core_js_modules_es_function_name__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_function_name__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/es.string.split */ "./node_modules/core-js/modules/es.string.split.js");
+/* harmony import */ var core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _services_requests__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../services/requests */ "./src/js/services/requests.js");
+
+
+
+
+
+var drop = function drop() {
+  // drag *
+  // dragend *
+  // dragenter - A dragged element or text selection enters a valid drop target.
+  // dragexit *
+  // dragleave - A dragged element or text selection leaves a valid drop target.
+  // dragover - 	An element or text selection is being dragged over a valid drop target
+  // dragstart *
+  // drop - 	An element is dropped on a valid drop target.
+  var fileInputs = document.querySelectorAll('[name ="upload"]');
+  ['dragenter', 'dragleave', 'dragover', 'drop'].forEach(function (eventName) {
+    fileInputs.forEach(function (input) {
+      input.addEventListener(eventName, preventDafaults, false);
+    });
+  });
+
+  function preventDafaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function highlight(item) {
+    item.closest(".file_upload").style.border = "5px solid yellow";
+    item.closest(".file_upload").style.backgroundColor = "rgba(0,0,0, .7)";
+  }
+
+  function unhighlight(item) {
+    item.closest(".file_upload").style.border = "none";
+
+    if (item.closest('.calc_form')) {
+      item.closest('.file_upload').style.backgroundColor = "#fff";
+    } else if (item.closest('#block')) {
+      item.closest('.file_upload').style.backgroundColor = "#f7e7e6";
+    } else {
+      item.closest('.file_upload').style.backgroundColor = "#ededed";
+    }
+  }
+
+  ['dragenter', 'dragover'].forEach(function (eventName) {
+    fileInputs.forEach(function (input) {
+      input.addEventListener(eventName, function () {
+        return highlight(input);
+      }, false);
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (eventName) {
+    fileInputs.forEach(function (input) {
+      input.addEventListener(eventName, function () {
+        return unhighlight(input);
+      }, false);
+    });
+  });
+  fileInputs.forEach(function (input) {
+    input.addEventListener('drop', function (e) {
+      input.files = e.dataTransfer.files;
+      var formData = new FormData();
+      formData.append('file', input.files[0]);
+      Object(_services_requests__WEBPACK_IMPORTED_MODULE_3__["postData"])('assets/server.php', formData).then(function (res) {
+        console.log(res);
+      });
+      var dots;
+      var tmp = input.files[0].name.split('.');
+      tmp[0].length > 11 ? dots = "..." : dots = ".";
+      var name = tmp[0].substring(0, 11) + dots + tmp[1];
+      input.previousElementSibling.textContent = name;
+    });
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (drop);
+
+/***/ }),
+
+/***/ "./src/js/modules/filter.js":
+/*!**********************************!*\
+  !*** ./src/js/modules/filter.js ***!
+  \**********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+
+
+var filter = function filter() {
+  var menu = document.querySelector('.portfolio-menu'),
+      items = menu.querySelectorAll('li'),
+      wrapper = document.querySelector('.portfolio-wrapper'),
+      markAll = wrapper.querySelectorAll('.all'),
+      no = document.querySelector('.portfolio-no');
+  var markType, className;
+  menu.addEventListener('click', function (e) {
+    var target = e.target;
+
+    if (target && target.tagName == "LI") {
+      items.forEach(function (btn) {
+        return btn.classList.remove('active');
+      });
+      className = target.classList.value;
+      target.classList.add('active');
+      markType = wrapper.querySelectorAll('.' + className);
+    }
+
+    markAll.forEach(function (mark) {
+      mark.style.display = 'none';
+      mark.classList.remove('animated', 'fadeIn');
+    });
+    no.style.display = 'none';
+    no.classList.remove('animated', 'fadeIn');
+
+    if (markType.length > 0) {
+      markType.forEach(function (mark) {
+        mark.style.display = 'block';
+        mark.classList.add('animated', 'fadeIn');
+      });
+    } else {
+      no.style.display = 'block';
+      no.classList.add('animated', 'fadeIn');
+    }
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (filter);
+
+/***/ }),
+
 /***/ "./src/js/modules/forms.js":
 /*!*********************************!*\
   !*** ./src/js/modules/forms.js ***!
@@ -4233,10 +4772,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_split__WEBPACK_IMPORTED_MODULE_4__);
 /* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
 /* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
-/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_6__);
-
-
+/* harmony import */ var _services_requests__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../services/requests */ "./src/js/services/requests.js");
 
 
 
@@ -4244,10 +4780,17 @@ __webpack_require__.r(__webpack_exports__);
 
 
 // import checkNumInputs from "./checkNumInputs";
-var forms = function forms() {
+
+
+var forms = function forms(state) {
   var form = document.querySelectorAll('form'),
       inputs = document.querySelectorAll('input'),
       upload = document.querySelectorAll('[name="upload"]');
+  inputs.forEach(function (item) {
+    if (item.getAttribute('name') === 'upload') {
+      item.setAttribute('required', '');
+    }
+  });
   var message = {
     loading: 'Идет отправка...',
     success: 'Отправлено! Скоро с вами свяжемся',
@@ -4260,35 +4803,6 @@ var forms = function forms() {
     designer: 'assets/server.php',
     question: 'assets/question.php'
   };
-
-  var postData = function postData(url, data) {
-    var res;
-    return regeneratorRuntime.async(function postData$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            _context.next = 2;
-            return regeneratorRuntime.awrap(fetch(url, {
-              method: "POST",
-              body: data
-            }));
-
-          case 2:
-            res = _context.sent;
-            _context.next = 5;
-            return regeneratorRuntime.awrap(res.text());
-
-          case 5:
-            return _context.abrupt("return", _context.sent);
-
-          case 6:
-          case "end":
-            return _context.stop();
-        }
-      }
-    });
-  };
-
   upload.forEach(function (item) {
     item.addEventListener('input', function () {
       var dots;
@@ -4316,10 +4830,17 @@ var forms = function forms() {
       textMessage.textContent = message.loading;
       statusMessage.appendChild(textMessage);
       var formData = new FormData(item);
+
+      if (item.getAttribute("data-calc") === "") {
+        for (var key in state) {
+          formData.append(key, state[key]);
+        }
+      }
+
       var api;
       item.closest('.popup-design') || item.classList.contains("calc_form") ? api = path.designer : api = path.question;
       console.log(api);
-      postData(api, formData).then(function (res) {
+      Object(_services_requests__WEBPACK_IMPORTED_MODULE_6__["postData"])(api, formData).then(function (res) {
         console.log(res);
         statusImg.setAttribute('src', message.ok);
         textMessage.innerHTML = message.success;
@@ -4327,10 +4848,22 @@ var forms = function forms() {
         statusImg.setAttribute('src', message.fail);
         textMessage.innerHTML = message.failure;
       }).finally(function () {
+        console.log(item);
         item.reset();
         upload.forEach(function (item) {
           item.previousElementSibling.textContent = "Файл не выбран";
         });
+
+        if (state) {
+          for (var _key in state) {
+            delete state[_key];
+          }
+
+          var resultBlock = document.querySelector(".calc-price");
+          resultBlock.textContent = "Для расчета нужно выбрать размер картины и материал картины";
+          console.log(state);
+        }
+
         setTimeout(function () {
           statusMessage.remove();
           item.style.display = 'block';
@@ -4401,10 +4934,6 @@ var mask = function mask(selector) {
     } else {
       setCursorPosition(this.value.length, this);
     }
-
-    console.log("def = ".concat(def));
-    console.log("val = ".concat(val));
-    console.log("value = ".concat(this.value));
   }
 
   var inputs = document.querySelectorAll(selector);
@@ -4540,6 +5069,206 @@ var modals = function modals() {
 
 /***/ }),
 
+/***/ "./src/js/modules/pictureSize.js":
+/*!***************************************!*\
+  !*** ./src/js/modules/pictureSize.js ***!
+  \***************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_es_array_slice__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.slice */ "./node_modules/core-js/modules/es.array.slice.js");
+/* harmony import */ var core_js_modules_es_array_slice__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_slice__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_1__);
+
+
+
+var pictureSize = function pictureSize(imgSelector) {
+  var blocks = document.querySelectorAll(imgSelector);
+
+  function showImg(block) {
+    var img = block.querySelector("img");
+    img.src = img.src.slice(0, -4) + '-1.png';
+    block.querySelectorAll('p:not(.sizes-hit)').forEach(function (p) {
+      p.style.display = 'none';
+    });
+  }
+
+  function hideImg(block) {
+    var img = block.querySelector("img");
+    img.src = img.src.slice(0, -6) + '.png';
+    block.querySelectorAll('p:not(.sizes-hit)').forEach(function (p) {
+      p.style.display = 'block';
+    });
+  }
+
+  blocks.forEach(function (block) {
+    block.addEventListener('mouseover', function () {
+      showImg(block);
+    });
+    block.addEventListener('mouseout', function () {
+      hideImg(block);
+    });
+  });
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (pictureSize);
+
+/***/ }),
+
+/***/ "./src/js/modules/scrolling.js":
+/*!*************************************!*\
+  !*** ./src/js/modules/scrolling.js ***!
+  \*************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _calc__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./calc */ "./src/js/modules/calc.js");
+
+
+
+var scrolling = function scrolling(upSelector) {
+  var upElem = document.querySelector(upSelector);
+  window.addEventListener("scroll", function (upSelector) {
+    if (document.documentElement.scrollTop > 1650) {
+      upElem.classList.add("animated", "fadeIn");
+      upElem.classList.remove("fadeOut");
+    } else {
+      upElem.classList.add("fadeOut");
+      upElem.classList.remove("fadeIn");
+    }
+  });
+  var links = document.querySelectorAll('[href^="#"]'),
+      speed = 0.2;
+  links.forEach(function (link) {
+    if (link.getAttribute('href') != '#') {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        var widthTop = document.documentElement.scrollTop,
+            hash = this.hash,
+            toBlock = document.querySelector(hash).getBoundingClientRect().top,
+            start = null;
+        requestAnimationFrame(step);
+
+        function step(time) {
+          if (start === null) {
+            start = time;
+          }
+
+          var progress = time - start,
+              r = toBlock < 0 ? Math.max(widthTop - progress / speed, widthTop + toBlock) : Math.min(widthTop + progress / speed, widthTop + toBlock);
+          document.documentElement.scrollTo(0, r);
+
+          if (r != widthTop + toBlock) {
+            requestAnimationFrame(step);
+          } else {
+            location.hash = hash;
+          }
+        }
+      });
+    }
+  }); //pure js scroll
+  // const element = document.documentElement,
+  //     body = document.body;
+  // const calcScroll = ()=> {
+  //     upElem.addEventListener("click", function(e) {
+  //         let scrollTop = Math.round(body.scrollTop || element.scrollTop);
+  //         if (this.hash !== ""){
+  //             e.preventDefault();
+  //             let hashElement = document.querySelector(this.hash),
+  //                 hashElementTop = 0;
+  //             while (hashElement.offsetParent) {
+  //                 hashElementTop += hashElement.offsetTop;
+  //                 hashElement = hashElement.offsetParent;
+  //             }
+  //             hashElementTop = Math.round(hashElementTop);
+  //             smoothScroll(scrollTop, hashElementTop, this.hash);
+  //         }
+  //     });
+  // };
+  // const smoothScroll = (from, to, hash)=> {
+  //     let timeInterval = 1,
+  //         prevScrollTop,
+  //         speed;
+  //     if (to > from) {
+  //         speed = 30;
+  //     } else {
+  //         speed = -30;
+  //     }
+  //     let move = setInterval(function(){
+  //         let scrollTop = Math.round(body.scrollTop || element.scrollTop);
+  //         if (prevScrollTop === scrollTop || (to > from && scrollTop >= to) || (to < from && scrollTop <= to)) {
+  //             clearInterval(move);
+  //             history.replaceState(history.state, document.title, location.href.replace(/#.*$/g, "") + hash);
+  //         } else {
+  //             body.scrollTop += speed;  
+  //             element.scrollTop += speed;
+  //             prevScrollTop = scrollTop;
+  //         }
+  //     }, timeInterval);
+  // };
+  // calcScroll();
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (scrolling);
+
+/***/ }),
+
+/***/ "./src/js/modules/showMoreStyles.js":
+/*!******************************************!*\
+  !*** ./src/js/modules/showMoreStyles.js ***!
+  \******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.concat */ "./node_modules/core-js/modules/es.array.concat.js");
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_string_link__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/es.string.link */ "./node_modules/core-js/modules/es.string.link.js");
+/* harmony import */ var core_js_modules_es_string_link__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_string_link__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/web.dom-collections.for-each */ "./node_modules/core-js/modules/web.dom-collections.for-each.js");
+/* harmony import */ var core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_web_dom_collections_for_each__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _services_requests__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../services/requests */ "./src/js/services/requests.js");
+
+
+
+
+
+var showMoreStyles = function showMoreStyles(trigger, wrapper) {
+  var btn = document.querySelector(trigger);
+  btn.addEventListener('click', function () {
+    Object(_services_requests__WEBPACK_IMPORTED_MODULE_3__["getResource"])('assets/db.json').then(function (res) {
+      return createCards(res.styles);
+    }).catch(function (error) {
+      return alert(error);
+    });
+    this.remove();
+  });
+
+  function createCards(response) {
+    response.forEach(function (_ref) {
+      var src = _ref.src,
+          title = _ref.title,
+          link = _ref.link;
+      var card = document.createElement('div');
+      card.classList.add('animated', 'flipInX', 'col-sm-3', 'col-sm-offset-0', 'col-xs-10', 'col-xs-offset-1');
+      card.innerHTML = "\n                <div class=styles-block>\n                    <img src=".concat(src, " alt=\"style\">\n                    <h4>").concat(title, "</h4>\n                    <a href=\"").concat(link, "\">\u041F\u043E\u0434\u0440\u043E\u0431\u043D\u0435\u0435</a>\n                </div>\n             ");
+      document.querySelector(wrapper).appendChild(card);
+    });
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (showMoreStyles);
+
+/***/ }),
+
 /***/ "./src/js/modules/sliders.js":
 /*!***********************************!*\
   !*** ./src/js/modules/sliders.js ***!
@@ -4622,6 +5351,96 @@ var sliders = function sliders(slides, dir, prev, next) {
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (sliders);
+
+/***/ }),
+
+/***/ "./src/js/services/requests.js":
+/*!*************************************!*\
+  !*** ./src/js/services/requests.js ***!
+  \*************************************/
+/*! exports provided: postData, getResource */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "postData", function() { return postData; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getResource", function() { return getResource; });
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! core-js/modules/es.array.concat */ "./node_modules/core-js/modules/es.array.concat.js");
+/* harmony import */ var core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_array_concat__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! core-js/modules/es.object.to-string */ "./node_modules/core-js/modules/es.object.to-string.js");
+/* harmony import */ var core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_object_to_string__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! core-js/modules/es.promise */ "./node_modules/core-js/modules/es.promise.js");
+/* harmony import */ var core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(core_js_modules_es_promise__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! regenerator-runtime/runtime */ "./node_modules/regenerator-runtime/runtime.js");
+/* harmony import */ var regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(regenerator_runtime_runtime__WEBPACK_IMPORTED_MODULE_3__);
+
+
+
+
+
+var postData = function postData(url, data) {
+  var res;
+  return regeneratorRuntime.async(function postData$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          _context.next = 2;
+          return regeneratorRuntime.awrap(fetch(url, {
+            method: "POST",
+            body: data
+          }));
+
+        case 2:
+          res = _context.sent;
+          _context.next = 5;
+          return regeneratorRuntime.awrap(res.text());
+
+        case 5:
+          return _context.abrupt("return", _context.sent);
+
+        case 6:
+        case "end":
+          return _context.stop();
+      }
+    }
+  });
+};
+
+var getResource = function getResource(url) {
+  var res;
+  return regeneratorRuntime.async(function getResource$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          _context2.next = 2;
+          return regeneratorRuntime.awrap(fetch(url));
+
+        case 2:
+          res = _context2.sent;
+
+          if (res.ok) {
+            _context2.next = 5;
+            break;
+          }
+
+          throw new Error("Could not fetch ".concat(url, ", status: ").concat(res.status));
+
+        case 5:
+          _context2.next = 7;
+          return regeneratorRuntime.awrap(res.json());
+
+        case 7:
+          return _context2.abrupt("return", _context2.sent);
+
+        case 8:
+        case "end":
+          return _context2.stop();
+      }
+    }
+  });
+};
+
+
 
 /***/ })
 
